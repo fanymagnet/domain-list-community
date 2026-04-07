@@ -31,11 +31,16 @@ jobs:
         run: |
           echo "RELEASE_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
           echo "TAG_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+          echo "DOH_EXTRA=https://raw.githubusercontent.com/dibdot/DoH-IP-blocklists/master/doh-domains.txt" >> $GITHUB_ENV
         shell: bash
+
+      - name: Importing data from external sources
+        run: |
+          cd code || exit 1
+          curl -fsSL $DOH_EXTRA | awk 'NR == 1 { print "" } NF > 0 { print "full:"$0 }' >> ./data/category-doh
 
       - name: Build dlc.dat and plain lists
         run: |
-          cd code || exit 1
           go run ./ --outputdir=../ --exportlists=category-ads-all,tld-cn,cn,tld-\!cn,geolocation-\!cn,apple,icloud
           go run ./cmd/datdump/main.go --inputdata=../dlc.dat --outputdir=../ --exportlists=_all_
           cd ../ && rm -rf code
